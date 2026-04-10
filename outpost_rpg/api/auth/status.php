@@ -3,17 +3,19 @@
  * Проверка статуса авторизации пользователя
  */
 
-require_once __DIR__ . '/../includes/config.php';
-require_once __DIR__ . '/../includes/database.php';
+require_once __DIR__ . '/../../includes/config.php';
+require_once __DIR__ . '/../../includes/database.php';
 
 header('Content-Type: application/json');
+
+// Принудительно стартуем сессию если еще не запущена
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 try {
     $db = Database::getInstance();
     $pdo = $db->getConnection();
-    
-    // Проверяем сессию
-    session_start();
     
     if (isset($_SESSION['user_id'])) {
         $userId = (int)$_SESSION['user_id'];
