@@ -12,6 +12,7 @@ CREATE TABLE users (
     avatar_path VARCHAR(255) DEFAULT 'assets/images/characters/default.png',
     rank_id INT DEFAULT 1,
     experience BIGINT DEFAULT 0,
+    experience_to_next BIGINT DEFAULT 100,
     level INT DEFAULT 1,
     gold BIGINT DEFAULT 100,
     gems INT DEFAULT 0,
@@ -26,6 +27,7 @@ CREATE TABLE users (
     luck INT DEFAULT 10,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_login TIMESTAMP NULL,
+    last_online TIMESTAMP NULL,
     is_online BOOLEAN DEFAULT FALSE,
     is_banned BOOLEAN DEFAULT FALSE,
     ban_reason TEXT NULL,
@@ -48,15 +50,15 @@ CREATE TABLE ranks (
 ) ENGINE=InnoDB;
 
 -- Заполнение рангов
-INSERT INTO ranks (name, min_experience, bonus_gold, bonus_xp, color) VALUES
-('Новичок', 0, 0, 0, '#808080'),
-('Опытный', 1000, 5, 5, '#008000'),
-('Ветеран', 5000, 10, 10, '#0000FF'),
-('Элита', 15000, 15, 15, '#800080'),
-('Мастер', 50000, 20, 20, '#FFA500'),
-('Легенда', 100000, 25, 25, '#FF0000'),
-('Герой', 250000, 30, 30, '#FFD700'),
-('Бог', 1000000, 50, 50, '#9370DB');
+INSERT INTO ranks (name, min_experience, bonus_gold, bonus_xp, color, icon_path) VALUES
+('Новичок', 0, 0, 0, '#808080', 'assets/images/ranks/novice.png'),
+('Опытный', 1000, 5, 5, '#008000', 'assets/images/ranks/experienced.png'),
+('Ветеран', 5000, 10, 10, '#0000FF', 'assets/images/ranks/veteran.png'),
+('Элита', 15000, 15, 15, '#800080', 'assets/images/ranks/elite.png'),
+('Мастер', 50000, 20, 20, '#FFA500', 'assets/images/ranks/master.png'),
+('Легенда', 100000, 25, 25, '#FF0000', 'assets/images/ranks/legend.png'),
+('Герой', 250000, 30, 30, '#FFD700', 'assets/images/ranks/hero.png'),
+('Бог', 1000000, 50, 50, '#9370DB', 'assets/images/ranks/god.png');
 
 -- Таблица предметов
 CREATE TABLE items (
@@ -112,14 +114,14 @@ CREATE TABLE inventory (
 CREATE TABLE equipment (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
-    slot_type ENUM('weapon', 'armor', 'helmet', 'boots', 'ring', 'amulet') NOT NULL,
+    slot ENUM('weapon', 'armor', 'helmet', 'boots', 'ring', 'amulet') NOT NULL,
     item_id INT NOT NULL,
     durability INT DEFAULT 100,
     enchantment_level INT DEFAULT 0,
     equipped_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE,
-    UNIQUE KEY unique_user_slot_type (user_id, slot_type),
+    UNIQUE KEY unique_user_slot (user_id, slot),
     INDEX idx_user (user_id)
 ) ENGINE=InnoDB;
 
@@ -163,6 +165,25 @@ CREATE TABLE monsters (
     abilities JSON NULL,
     INDEX idx_level (level),
     INDEX idx_boss (is_boss)
+) ENGINE=InnoDB;
+
+-- Таблица убийств монстров (для статистики)
+CREATE TABLE monster_kills (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    monster_id INT NOT NULL,
+    location_id INT NULL,
+    damage_dealt INT DEFAULT 0,
+    is_killing_blow BOOLEAN DEFAULT TRUE,
+    experience_gained INT DEFAULT 0,
+    gold_looted INT DEFAULT 0,
+    killed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (monster_id) REFERENCES monsters(id) ON DELETE CASCADE,
+    FOREIGN KEY (location_id) REFERENCES locations(id) ON DELETE SET NULL,
+    INDEX idx_user (user_id),
+    INDEX idx_monster (monster_id),
+    INDEX idx_killed_at (killed_at)
 ) ENGINE=InnoDB;
 
 -- Боты (NPC)
