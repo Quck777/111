@@ -3,10 +3,15 @@
  * Регистрация нового пользователя
  */
 
-require_once __DIR__ . '/../includes/config.php';
-require_once __DIR__ . '/../includes/database.php';
+require_once __DIR__ . '/../../includes/config.php';
+require_once __DIR__ . '/../../includes/database.php';
 
 header('Content-Type: application/json');
+
+// Принудительно стартуем сессию если еще не запущена
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -68,13 +73,14 @@ try {
     $userId = $pdo->lastInsertId();
     
     // Старт сессии
-    session_start();
     $_SESSION['user_id'] = $userId;
+    $_SESSION['username'] = $username;
     
     echo json_encode([
         'success' => true,
         'message' => 'Регистрация успешна',
-        'user_id' => $userId
+        'user_id' => $userId,
+        'username' => $username
     ]);
     
 } catch (Exception $e) {

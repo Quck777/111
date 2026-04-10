@@ -62,8 +62,8 @@ class User {
      */
     public function login($username, $password) {
         $user = $this->db->fetchOne(
-            "SELECT * FROM users WHERE username = :username OR email = :username",
-            ['username' => $username]
+            "SELECT * FROM users WHERE username = :username OR email = :email",
+            ['username' => $username, 'email' => $username]
         );
         
         if (!$user) {
@@ -273,7 +273,7 @@ class User {
     public function getLeaderboard($limit = 10, $offset = 0) {
         return $this->db->fetchAll(
             "SELECT * FROM leaderboard LIMIT :limit OFFSET :offset",
-            ['limit' => $limit, 'offset' => $offset]
+            ['limit' => (int)$limit, 'offset' => (int)$offset]
         );
     }
     

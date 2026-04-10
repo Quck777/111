@@ -1,66 +1,54 @@
-```gitignore
-# Build artifacts
-dist/
-build/
-*.min.js
-*.min.css
-*.bundle.js
+```php
+# Compiled and build artifacts
+*.o
+*.obj
+*.out
 
 # Dependencies
+vendor/
 node_modules/
 
-# Environment variables
+# Logs and temp files
+*.log
+*.tmp
+*.swp
+
+# Environment
 .env
 .env.local
 *.env.*
 
-# Logs
-*.log
-
-# Editor files
+# Editors
 .vscode/
 .idea/
 *.swp
 *.swo
-*.tmp
 
-# OS generated files
+# OS specific
 .DS_Store
 Thumbs.db
 
-# Python specific
+# PHP specific
+*.php~
+phpunit.xml.dist
+composer.lock
+
+# Build directories
+build/
+dist/
+target/
+
+# Cache directories
+.cache/
 __pycache__/
 *.pyc
-*.pyo
-*.pyd
-.Python
-*.so
 
 # Coverage reports
 coverage/
 htmlcov/
 .coverage
 
-# Distribution / packaging
-.Python
-*.egg-info/
-.eggs/
-
-# Testing
-.pytest_cache/
-.mypy_cache/
-.tox/
-
-# Local configuration
-config/local_settings.py
-settings_local.py
-
-# Database
-*.db
-*.sqlite
-*.sqlite3
-
-# Compression
+# Zip and compressed files
 *.zip
 *.gz
 *.tar
