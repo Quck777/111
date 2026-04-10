@@ -77,7 +77,7 @@ try {
             COUNT(DISTINCT a.id) as achievements_unlocked
         FROM users u
         LEFT JOIN monster_kills m ON u.id = m.user_id
-        LEFT JOIN user_quests uq ON u.id = uq.user_id AND uq.is_completed = 1
+        LEFT JOIN user_quests uq ON u.id = uq.user_id AND uq.status = 'completed'
         LEFT JOIN quests q ON uq.quest_id = q.id
         LEFT JOIN user_achievements ua ON u.id = ua.user_id
         LEFT JOIN achievements a ON ua.achievement_id = a.id
