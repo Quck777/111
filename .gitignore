@@ -1,1 +1,26 @@
-Nothing should be ignored based on the provided file changes, as they consist only of source/config files (.md, .js, .php) without any build artifacts, dependencies, or temporary files.
+```gitignore
+# Dependencies
+vendor/
+
+# Logs
+*.log
+
+# Environment
+.env
+.env.local
+.env.*
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*~
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# PHP specific
+*.php~
+php_errors.log
+```

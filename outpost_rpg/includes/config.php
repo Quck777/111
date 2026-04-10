@@ -59,8 +59,14 @@ error_reporting(E_ALL);
 // Время по умолчанию
 date_default_timezone_set('Europe/Moscow');
 
-// Запуск сессии
-if (session_status() === PHP_SESSION_NONE) {
+// Запуск сессии только если это не API запрос (API управляет сессией самостоятельно)
+if (!defined('API_REQUEST') && session_status() === PHP_SESSION_NONE) {
     session_name(SESSION_NAME);
+    
+    // Настройки безопасности сессии
+    ini_set('session.cookie_httponly', 1);
+    ini_set('session.use_only_cookies', 1);
+    ini_set('session.cookie_samesite', 'Strict');
+    
     session_start();
 }
