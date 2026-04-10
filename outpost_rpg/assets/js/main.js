@@ -31,13 +31,17 @@ document.addEventListener('DOMContentLoaded', () => {
  */
 async function checkAuthStatus() {
     try {
-        const response = await API.get('auth/status.php');
-        if (response.success && response.user) {
+        const response = await API.request('auth/status.php');
+        if (response && response.success && response.user) {
             AppState.user = response.user;
             updateUserInterface();
+            console.log('Пользователь авторизован:', AppState.user.username);
+        } else {
+            console.log('Пользователь не авторизован');
         }
     } catch (error) {
-        console.log('Пользователь не авторизован');
+        // Тихая ошибка - пользователь просто не авторизован
+        console.log('Статус авторизации: гость');
     }
 }
 
@@ -313,13 +317,15 @@ function initCharacterPanel() {
  */
 async function loadCharacterInfo() {
     try {
-        const response = await API.getProfile();
-        if (response.success) {
+        const response = await API.request('user/profile.php');
+        if (response && response.success) {
             AppState.user = response.user;
             renderCharacterInfo(response.user);
+            console.log('Профиль загружен успешно');
         }
     } catch (error) {
-        console.error('Ошибка загрузки профиля:', error);
+        // Тихая ошибка - профиль не загружен (пользователь не авторизован)
+        console.log('Профиль не загружен (гость)');
     }
 }
 

@@ -3,7 +3,9 @@
  */
 
 const API = {
-    baseUrl: 'api',
+    baseUrl: window.location.pathname.includes('/admin/') || window.location.pathname.includes('/api/') 
+        ? '.' 
+        : './api',
     
     /**
      * Выполнение запроса к API
@@ -14,23 +16,39 @@ const API = {
             headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
-            }
+            },
+            credentials: 'same-origin'
         };
         
         const config = { ...defaultOptions, ...options };
         
         try {
             const response = await fetch(url, config);
+            
+            // Проверяем HTML ответ (ошибка 404 или 500)
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                const text = await response.text();
+                console.error('Non-JSON response:', text.substring(0, 200));
+                throw new Error(`Сервер вернул HTML вместо JSON. Статус: ${response.status}`);
+            }
+            
             const data = await response.json();
             
             if (!response.ok) {
-                throw new Error(data.message || 'Ошибка запроса');
+                throw new Error(data.message || data.error || 'Ошибка запроса');
             }
             
             return data;
         } catch (error) {
+            if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                console.error('Network error:', error);
+                throw new Error('Нет соединения с сервером');
+            }
             console.error('API Error:', error);
-            Utils.showNotification(error.message, 'error');
+            if (typeof Utils !== 'undefined' && Utils.showNotification) {
+                Utils.showNotification(error.message, 'error');
+            }
             throw error;
         }
     },
