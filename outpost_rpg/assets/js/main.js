@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
  */
 async function checkAuthStatus() {
     try {
-        const response = await API.request('auth/status.php');
+        const response = await API.get('auth/status.php');
         if (response && response.success && response.user) {
             AppState.user = response.user;
             updateUserInterface();
@@ -317,10 +317,10 @@ function initCharacterPanel() {
  */
 async function loadCharacterInfo() {
     try {
-        const response = await API.request('user/profile.php');
+        const response = await API.get('user/profile.php');
         if (response && response.success) {
-            AppState.user = response.user;
-            renderCharacterInfo(response.user);
+            AppState.user = response.profile;
+            renderCharacterInfo(response.profile);
             console.log('Профиль загружен успешно');
         }
     } catch (error) {

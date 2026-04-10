@@ -44,7 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Автоматический вход после регистрации
             $loginResult = $user->login($username, $password);
             if ($loginResult['success']) {
-                header('Location: game.php');
+                header('Location: index.php');
                 exit;
             }
         } else {
