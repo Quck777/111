@@ -1,7 +1,36 @@
-# Examples 1:
+# Examples
+## Example 1:
+Input:
+### Added files:
+[src/main.py, README.md, config.json]
+
+### Deleted files:
+[old/unused.py]
+
+### Modified files:
+[utils.py]
+
+###current .gitignore Content
 (empty)
 
-# Example 2 (Project with artifacts):
+Expected Output:
+
+
+## Example 2:
+Input:
+### Added files:
+[pycache/main.cpython-310.pyc, dist/app.js, .env.local, .vscode/settings.json]
+
+### Deleted files:
+[]
+
+### Modified files:
+[]
+
+### current .gitignore Content
+*.log
+
+Expected Output:
 # Compiled and build artifacts
 *.pyc
 __pycache__/
@@ -9,64 +38,27 @@ __pycache__/
 *.obj
 dist/
 build/
-target/
-
 # Dependencies
 .venv/
 venv/
 node_modules/
-.julia/
-.zig-cache/
-
 # Logs and temp files
 *.log
 *.tmp
 *.swp
-*.swo
-
 # Environment
 .env
 .env.local
 .env.*
-
 # Editors
 .vscode/
 .idea/
-*.swp
-*.swo
-
-# Coverage
-coverage/
-htmlcov/
-.coverage
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Archives
-*.zip
-*.gz
-*.tar
-*.tgz
-*.bz2
-*.xz
-*.7z
-*.rar
-*.zst
-*.lz4
-*.lzh
-*.cab
-*.arj
-*.rpm
-*.deb
-*.Z
-*.lz
-*.lzo
-*.tar.gz
-*.tar.bz2
-*.tar.xz
-*.tar.zst
 
 # Original rules preserved
 *.log
+
+
+# Final case:
+# No build artifacts, dependencies, or temp files in the changes
+# Only a SQL file modification
+# Output nothing

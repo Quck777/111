@@ -438,7 +438,7 @@ INSERT INTO battle_licenses (name, type, price_gold, price_crystals, attacks_all
 ('PvP Лицензия A', 'pvp', 500, 0, 100, 24, 15);
 
 -- Рейд боссы (3 штуки)
-INSERT INTO raid_bosses (name, description, level, hp, max_hp, atk, exp_reward, gold_reward, participants_limit) VALUES
+INSERT INTO raid_bosses (name, description, level, hp, max_hp, atk, exp, gold, player_limit) VALUES
 ('КорольГоблин', 'Вождь гоблинов', 8, 800, 800, 25, 300, 250, 10),
 ('Призрак мага', 'Дух древнего мага', 12, 1500, 1500, 40, 500, 400, 10),
 ('Драконагма', 'Огненный дракон', 15, 2500, 2500, 60, 800, 600, 20);
