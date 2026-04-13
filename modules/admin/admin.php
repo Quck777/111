@@ -9,6 +9,16 @@ if (!defined('GAME_MODULE')) {
     exit('Direct access not allowed');
 }
 
+// Подключаем config.php если еще не подключен
+if (!class_exists('Database')) {
+    require_once __DIR__ . '/../../config.php';
+}
+
+// Подключаем функции чата если нужно
+if (!function_exists('sendSystemMessage')) {
+    require_once __DIR__ . '/../chat/chat.php';
+}
+
 /**
  * Check if user is admin
  */
@@ -60,7 +70,7 @@ function adminGetUsers(): void {
     
     $pdo = Database::getConnection();
     $stmt = $pdo->query("SELECT id, username, email, class, race, level, hp, max_hp, mp, max_mp, atk, def, gold, pvp_rating, pvp_wins, pvp_losses, created_at, last_login, role FROM users ORDER BY level DESC LIMIT 100");
-    echo json_encode($stmt->fetchAll());
+    echo json_encode(['users' => $stmt->fetchAll()]);
 }
 
 /**
@@ -140,7 +150,7 @@ function adminGetItems(): void {
     
     $pdo = Database::getConnection();
     $stmt = $pdo->query("SELECT * FROM items ORDER BY id");
-    echo json_encode($stmt->fetchAll());
+    echo json_encode(['items' => $stmt->fetchAll()]);
 }
 
 /**
@@ -206,7 +216,7 @@ function adminGetEnemies(): void {
     
     $pdo = Database::getConnection();
     $stmt = $pdo->query("SELECT * FROM enemies ORDER BY level");
-    echo json_encode($stmt->fetchAll());
+    echo json_encode(['enemies' => $stmt->fetchAll()]);
 }
 
 /**
@@ -267,7 +277,7 @@ function adminGetQuests(): void {
     
     $pdo = Database::getConnection();
     $stmt = $pdo->query("SELECT * FROM quests ORDER BY id");
-    echo json_encode($stmt->fetchAll());
+    echo json_encode(['quests' => $stmt->fetchAll()]);
 }
 
 /**
@@ -292,11 +302,11 @@ function adminSaveQuest(): void {
     $pdo = Database::getConnection();
     
     if ($questId > 0) {
-        $pdo->prepare("UPDATE quests SET name = ?, description = ?, type = ?, target_id = ?, target_count = ?, exp_reward = ?, gold_reward = ?, min_level = ? WHERE id = ?")
+        $pdo->prepare("UPDATE quests SET title = ?, description = ?, type = ?, target_id = ?, target_count = ?, exp_reward = ?, gold_reward = ?, required_level = ? WHERE id = ?")
             ->execute([$name, $description, $type, $targetId, $targetCount, $expReward, $goldReward, $minLevel, $questId]);
         echo json_encode(['success' => true, 'message' => 'Квест обновлен']);
     } else {
-        $pdo->prepare("INSERT INTO quests (name, description, type, target_id, target_count, exp_reward, gold_reward, min_level) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
+        $pdo->prepare("INSERT INTO quests (title, description, type, target_id, target_count, exp_reward, gold_reward, required_level) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
             ->execute([$name, $description, $type, $targetId, $targetCount, $expReward, $goldReward, $minLevel]);
         echo json_encode(['success' => true, 'message' => 'Квест создан']);
     }
@@ -328,7 +338,7 @@ function adminGetGuilds(): void {
     
     $pdo = Database::getConnection();
     $stmt = $pdo->query("SELECT g.*, u.username as leader_name FROM guilds g JOIN users u ON g.leader_id = u.id ORDER BY g.level DESC");
-    echo json_encode($stmt->fetchAll());
+    echo json_encode(['guilds' => $stmt->fetchAll()]);
 }
 
 /**
@@ -358,7 +368,7 @@ function adminGetRaids(): void {
     
     $pdo = Database::getConnection();
     $stmt = $pdo->query("SELECT * FROM raid_bosses ORDER BY id");
-    echo json_encode($stmt->fetchAll());
+    echo json_encode(['raids' => $stmt->fetchAll()]);
 }
 
 /**
@@ -427,12 +437,15 @@ function adminGetStats(): void {
     $totalRaids = $pdo->query("SELECT COUNT(*) FROM raid_bosses")->fetchColumn();
     
     echo json_encode([
-        'total_users' => $totalUsers,
-        'total_guilds' => $totalGuilds,
-        'total_gold' => $totalGold,
-        'total_pvp_wins' => $totalPvpWins,
-        'total_quests' => $totalQuests,
-        'total_raids' => $totalRaids
+        'success' => true,
+        'stats' => [
+            'total_users' => $totalUsers,
+            'total_guilds' => $totalGuilds,
+            'total_gold' => $totalGold,
+            'pvp_wins' => $totalPvpWins,
+            'total_quests' => $totalQuests,
+            'total_raids' => $totalRaids
+        ]
     ]);
 }
 
