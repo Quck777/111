@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(50) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
+    email VARCHAR(100) DEFAULT NULL,
     race ENUM('human','elf','dwarf','orc','undead') DEFAULT 'human',
     class ENUM('warrior','mage','archer','rogue','paladin') DEFAULT 'warrior',
     level INT DEFAULT 1,
@@ -35,10 +36,10 @@ CREATE TABLE IF NOT EXISTS users (
     pvp_losses INT DEFAULT 0,
     battles_won INT DEFAULT 0,
     battles_lost INT DEFAULT 0,
+    deaths INT DEFAULT 0,
     last_login DATETIME DEFAULT NULL,
     last_ip VARCHAR(45) DEFAULT NULL,
-    is_admin TINYINT(1) DEFAULT 0,
-    is_banned TINYINT(1) DEFAULT 0,
+    role ENUM('player','moderator','admin','banned') DEFAULT 'player',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -55,6 +56,7 @@ CREATE TABLE IF NOT EXISTS items (
     hp_bonus INT DEFAULT 0,
     mp_bonus INT DEFAULT 0,
     description VARCHAR(255),
+    is_shop_item TINYINT(1) DEFAULT 0,
     is_temporary TINYINT(1) DEFAULT 0,
     duration_minutes INT DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -79,10 +81,11 @@ CREATE TABLE IF NOT EXISTS enemies (
     name VARCHAR(100) NOT NULL,
     level INT DEFAULT 1,
     hp INT DEFAULT 50,
+    max_hp INT DEFAULT 50,
     atk INT DEFAULT 5,
     def INT DEFAULT 2,
-    exp_reward INT DEFAULT 10,
-    gold_reward INT DEFAULT 5,
+    exp INT DEFAULT 10,
+    gold INT DEFAULT 5,
     crystals_reward INT DEFAULT 0,
     is_boss TINYINT(1) DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -292,9 +295,9 @@ CREATE TABLE IF NOT EXISTS raid_bosses (
     hp INT DEFAULT 500,
     max_hp INT DEFAULT 500,
     atk INT DEFAULT 30,
-    exp_reward INT DEFAULT 200,
-    gold_reward INT DEFAULT 150,
-    participants_limit INT DEFAULT 10,
+    exp INT DEFAULT 200,
+    gold INT DEFAULT 150,
+    player_limit INT DEFAULT 10,
     is_active TINYINT(1) DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -339,8 +342,8 @@ CREATE TABLE IF NOT EXISTS pvp_battles (
 -- =====================
 
 -- Тестовый пользователь Hero (пароль: hero123)
-INSERT INTO users (username, password, race, class, level, exp, hp, max_hp, mp, max_mp, atk, def, str, dex, intel, vit, luck, gold, crystals, pvp_rating, pvp_wins, pvp_losses, battles_won, battles_lost) 
-VALUES ('Hero', '$2y$10$abcdefghijklmnopqrst', 'human', 'warrior', 5, 500, 120, 120, 60, 60, 18, 8, 12, 10, 8, 12, 10, 500, 10, 1000, 3, 2, 15, 8);
+INSERT INTO users (username, password, race, class, level, exp, hp, max_hp, mp, max_mp, atk, def, str, dex, intel, vit, luck, gold, crystals, pvp_rating, pvp_wins, pvp_losses, battles_won, battles_lost, role) 
+VALUES ('Hero', '$2y$10$abcdefghijklmnopqrst', 'human', 'warrior', 5, 500, 120, 120, 60, 60, 18, 8, 12, 10, 8, 12, 10, 500, 10, 1000, 3, 2, 15, 8, 'admin');
 
 -- Предметы (20 штук)
 INSERT INTO items (name, type, rarity, value, required_level, atk_bonus, def_bonus, hp_bonus, mp_bonus, description, is_temporary, duration_minutes) VALUES
@@ -366,19 +369,19 @@ INSERT INTO items (name, type, rarity, value, required_level, atk_bonus, def_bon
 ('Амулет силы', 'amulet', 'legendary', 1000, 10, 0, 0, 0, 0, 'Увеличивает силу', 1, 60);
 
 -- Монстры (12 штук)
-INSERT INTO enemies (name, level, hp, atk, def, exp_reward, gold_reward, crystals_reward, is_boss) VALUES
-('Крыса', 1, 30, 4, 1, 10, 5, 0, 0),
-('Паук', 2, 45, 6, 2, 15, 8, 0, 0),
-('Волк', 3, 60, 8, 3, 20, 12, 0, 0),
-('Орк', 4, 80, 10, 4, 30, 20, 0, 0),
-('Скелет', 5, 100, 12, 5, 40, 30, 0, 0),
-('Гоблин', 6, 130, 15, 6, 55, 40, 0, 0),
-('Призрак', 7, 160, 18, 7, 70, 55, 0, 0),
-('Огр', 8, 200, 22, 9, 90, 75, 1, 1),
-('Дракончик', 9, 250, 28, 12, 120, 100, 2, 0),
-('Древний дракон', 10, 500, 40, 20, 300, 250, 5, 1),
-('Тролль', 12, 600, 35, 15, 250, 200, 3, 0),
-('Балрог', 15, 1000, 50, 25, 500, 400, 10, 1);
+INSERT INTO enemies (name, level, hp, max_hp, atk, def, exp, gold, crystals_reward, is_boss) VALUES
+('Крыса', 1, 30, 30, 4, 1, 10, 5, 0, 0),
+('Паук', 2, 45, 45, 6, 2, 15, 8, 0, 0),
+('Волк', 3, 60, 60, 8, 3, 20, 12, 0, 0),
+('Орк', 4, 80, 80, 10, 4, 30, 20, 0, 0),
+('Скелет', 5, 100, 100, 12, 5, 40, 30, 0, 0),
+('Гоблин', 6, 130, 130, 15, 6, 55, 40, 0, 0),
+('Призрак', 7, 160, 160, 18, 7, 70, 55, 0, 0),
+('Огр', 8, 200, 200, 22, 9, 90, 75, 1, 1),
+('Дракончик', 9, 250, 250, 28, 12, 120, 100, 2, 0),
+('Древний дракон', 10, 500, 500, 40, 20, 300, 250, 5, 1),
+('Тролль', 12, 600, 600, 35, 15, 250, 200, 3, 0),
+('Балрог', 15, 1000, 1000, 50, 25, 500, 400, 10, 1);
 
 -- Квесты (5 штук)
 INSERT INTO quests (title, description, type, target_id, target_count, exp_reward, gold_reward, required_level) VALUES
