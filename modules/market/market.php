@@ -18,7 +18,7 @@ function getMarketListings(): void {
         FROM market_listings ml 
         JOIN items it ON ml.item_id = it.id 
         JOIN users u ON ml.seller_id = u.id 
-        WHERE ml.status = 'active' 
+        WHERE ml.is_active = 1 
         ORDER BY ml.created_at DESC");
     echo json_encode($stmt->fetchAll());
 }
@@ -64,8 +64,8 @@ function createMarketListing(): void {
         $pdo->prepare("DELETE FROM inventory WHERE user_id = ? AND id = ?")->execute([$_SESSION['user_id'], $inventoryId]);
     }
     
-    $pdo->prepare("INSERT INTO market_listings (seller_id, item_id, quantity, price, status, created_at) VALUES (?, ?, 1, ?, 'active', NOW())")
-        ->execute([$_SESSION['user_id'], $item['item_id'], $price]);
+    $pdo->prepare("INSERT INTO market_listings (seller_id, item_id, item_name, item_type, item_rarity, price_gold, quantity, is_active, created_at) VALUES (?, ?, ?, ?, ?, ?, 1, 1, NOW())")
+        ->execute([$_SESSION['user_id'], $item['item_id'], $item['name'], $item['type'], $item['rarity'], $price]);
     
     $pdo->commit();
     
@@ -84,7 +84,7 @@ function buyFromMarket(): void {
     $listingId = (int)$_POST['listing_id'];
     $pdo = Database::getConnection();
     
-    $stmt = $pdo->prepare("SELECT * FROM market_listings WHERE id = ? AND status = 'active' FOR UPDATE");
+    $stmt = $pdo->prepare("SELECT * FROM market_listings WHERE id = ? AND is_active = 1 FOR UPDATE");
     $stmt->execute([$listingId]);
     $listing = $stmt->fetch();
     
@@ -124,7 +124,7 @@ function buyFromMarket(): void {
             ->execute([$_SESSION['user_id'], $listing['item_id'], $listing['quantity']]);
     }
     
-    $pdo->prepare("UPDATE market_listings SET status = 'sold', buyer_id = ?, sold_at = NOW() WHERE id = ?")
+    $pdo->prepare("UPDATE market_listings SET is_active = 0, created_at = NOW() WHERE id = ?")
         ->execute([$_SESSION['user_id'], $listingId]);
     
     $pdo->commit();
@@ -144,7 +144,7 @@ function cancelMarketListing(): void {
     $listingId = (int)$_POST['listing_id'];
     $pdo = Database::getConnection();
     
-    $stmt = $pdo->prepare("SELECT * FROM market_listings WHERE id = ? AND seller_id = ? AND status = 'active'");
+    $stmt = $pdo->prepare("SELECT * FROM market_listings WHERE id = ? AND seller_id = ? AND is_active = 1");
     $stmt->execute([$listingId, $_SESSION['user_id']]);
     $listing = $stmt->fetch();
     
@@ -167,7 +167,7 @@ function cancelMarketListing(): void {
             ->execute([$_SESSION['user_id'], $listing['item_id'], $listing['quantity']]);
     }
     
-    $pdo->prepare("UPDATE market_listings SET status = 'cancelled' WHERE id = ?")->execute([$listingId]);
+    $pdo->prepare("UPDATE market_listings SET is_active = 0 WHERE id = ?")->execute([$listingId]);
     
     $pdo->commit();
     
@@ -184,12 +184,7 @@ function getMyMarketListings(): void {
     }
     
     $pdo = Database::getConnection();
-    $stmt = $pdo->prepare("SELECT ml.*, it.name as item_name, it.type, it.rarity, 
-        CASE WHEN ml.status = 'sold' THEN (SELECT username FROM users WHERE id = ml.buyer_id) ELSE NULL END as buyer_name
-        FROM market_listings ml 
-        JOIN items it ON ml.item_id = it.id 
-        WHERE ml.seller_id = ? 
-        ORDER BY ml.created_at DESC");
+    $stmt = $pdo->prepare("SELECT ml.*, it.name as item_name, it.type, it.rarity FROM market_listings ml JOIN items it ON ml.item_id = it.id WHERE ml.seller_id = ? ORDER BY ml.created_at DESC");
     $stmt->execute([$_SESSION['user_id']]);
     echo json_encode($stmt->fetchAll());
 }
