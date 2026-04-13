@@ -529,6 +529,20 @@ CREATE TABLE IF NOT EXISTS war_participants (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- История атак в войнах гильдий (для совместимости со старым кодом)
+CREATE TABLE IF NOT EXISTS guild_war_attacks (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    war_id INT NOT NULL,
+    attacker_id INT NOT NULL,
+    target_id INT NOT NULL,
+    damage INT DEFAULT 0,
+    score INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (war_id) REFERENCES guild_wars(id) ON DELETE CASCADE,
+    FOREIGN KEY (attacker_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (target_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- Территории гильдий
 CREATE TABLE IF NOT EXISTS guild_territories (
     id INT AUTO_INCREMENT PRIMARY KEY,

@@ -374,7 +374,7 @@ function getHistory(): void {
     }
     
     $pdo = Database::getConnection();
-    $stmt = $pdo->prepare("SELECT * FROM battle_history WHERE user_id = ? ORDER BY created_at DESC LIMIT 50");
+    $stmt = $pdo->prepare("SELECT * FROM battles_history WHERE user_id = ? ORDER BY created_at DESC LIMIT 50");
     $stmt->execute([$_SESSION['user_id']]);
     echo json_encode($stmt->fetchAll());
 }

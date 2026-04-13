@@ -204,7 +204,7 @@ function donateToGuild(): void {
  */
 function getGuildWars(): void {
     $pdo = Database::getConnection();
-    $stmt = $pdo->query("SELECT gw.*, g1.name as guild1_name, g2.name as guild2_name FROM guild_wars gw JOIN guilds g1 ON gw.guild1_id = g1.id JOIN guilds g2 ON gw.guild2_id = g2.id WHERE gw.active = 1 ORDER BY gw.started_at DESC");
+    $stmt = $pdo->query("SELECT gw.*, g1.name as attacker_name, g2.name as defender_name FROM guild_wars gw JOIN guilds g1 ON gw.attacker_guild_id = g1.id JOIN guilds g2 ON gw.defender_guild_id = g2.id WHERE gw.status = 'active' ORDER BY gw.created_at DESC");
     echo json_encode($stmt->fetchAll());
 }
 
@@ -228,7 +228,7 @@ function getMyGuildWarStatus(): void {
         return;
     }
     
-    $stmt = $pdo->prepare("SELECT gw.*, g1.name as guild1_name, g2.name as guild2_name FROM guild_wars gw JOIN guilds g1 ON gw.guild1_id = g1.id JOIN guilds g2 ON gw.guild2_id = g2.id WHERE (gw.guild1_id = ? OR gw.guild2_id = ?) AND gw.active = 1");
+    $stmt = $pdo->prepare("SELECT gw.*, g1.name as attacker_name, g2.name as defender_name FROM guild_wars gw JOIN guilds g1 ON gw.attacker_guild_id = g1.id JOIN guilds g2 ON gw.defender_guild_id = g2.id WHERE (gw.attacker_guild_id = ? OR gw.defender_guild_id = ?) AND gw.status = 'active'");
     $stmt->execute([$membership['guild_id'], $membership['guild_id']]);
     echo json_encode($stmt->fetchAll());
 }
@@ -268,14 +268,14 @@ function declareGuildWar(): void {
         return;
     }
     
-    $stmt = $pdo->prepare("SELECT id FROM guild_wars WHERE (guild1_id = ? AND guild2_id = ?) OR (guild1_id = ? AND guild2_id = ?) AND active = 1");
+    $stmt = $pdo->prepare("SELECT id FROM guild_wars WHERE ((attacker_guild_id = ? AND defender_guild_id = ?) OR (attacker_guild_id = ? AND defender_guild_id = ?)) AND status IN ('pending', 'active')");
     $stmt->execute([$myGuild['guild_id'], $targetGuildId, $targetGuildId, $myGuild['guild_id']]);
     if ($stmt->fetch()) {
         echo json_encode(['error' => 'Война уже идет']);
         return;
     }
     
-    $pdo->prepare("INSERT INTO guild_wars (guild1_id, guild2_id, started_at, active) VALUES (?, ?, NOW(), 1)")
+    $pdo->prepare("INSERT INTO guild_wars (attacker_guild_id, defender_guild_id, created_at, status) VALUES (?, ?, NOW(), 'pending')")
         ->execute([$myGuild['guild_id'], $targetGuildId]);
     
     echo json_encode(['success' => true, 'message' => 'Война объявлена']);
@@ -302,7 +302,7 @@ function joinGuildWar(): void {
         return;
     }
     
-    $stmt = $pdo->prepare("SELECT * FROM guild_wars WHERE id = ? AND active = 1 AND (guild1_id = ? OR guild2_id = ?)");
+    $stmt = $pdo->prepare("SELECT * FROM guild_wars WHERE id = ? AND status = 'active' AND (attacker_guild_id = ? OR defender_guild_id = ?)");
     $stmt->execute([$warId, $membership['guild_id'], $membership['guild_id']]);
     $war = $stmt->fetch();
     
@@ -311,14 +311,14 @@ function joinGuildWar(): void {
         return;
     }
     
-    $stmt = $pdo->prepare("SELECT id FROM guild_war_participants WHERE war_id = ? AND user_id = ?");
+    $stmt = $pdo->prepare("SELECT id FROM war_participants WHERE war_id = ? AND user_id = ?");
     $stmt->execute([$warId, $_SESSION['user_id']]);
     if ($stmt->fetch()) {
         echo json_encode(['error' => 'Вы уже участвуете']);
         return;
     }
     
-    $pdo->prepare("INSERT INTO guild_war_participants (war_id, user_id, joined_at) VALUES (?, ?, NOW())")
+    $pdo->prepare("INSERT INTO war_participants (war_id, user_id, joined_at) VALUES (?, ?, NOW())")
         ->execute([$warId, $_SESSION['user_id']]);
     
     echo json_encode(['success' => true, 'message' => 'Вы присоединились к войне']);
@@ -354,7 +354,7 @@ function attackGuildWarEnemy(): void {
         return;
     }
     
-    $stmt = $pdo->prepare("SELECT id FROM guild_wars WHERE active = 1 AND ((guild1_id = ? AND guild2_id = ?) OR (guild1_id = ? AND guild2_id = ?))");
+    $stmt = $pdo->prepare("SELECT id FROM guild_wars WHERE status = 'active' AND ((attacker_guild_id = ? AND defender_guild_id = ?) OR (attacker_guild_id = ? AND defender_guild_id = ?))");
     $stmt->execute([$myMembership['guild_id'], $enemyGuild['guild_id'], $enemyGuild['guild_id'], $myMembership['guild_id']]);
     if (!$stmt->fetch()) {
         echo json_encode(['error' => 'Нет активной войны между гильдиями']);
@@ -377,9 +377,19 @@ function attackGuildWarEnemy(): void {
     $damage = max(1, $player['atk'] - $enemy['def'] * 0.5);
     $score = floor($damage / 10);
     
-    $pdo->prepare("INSERT INTO guild_war_attacks (war_id, attacker_id, target_id, damage, score, created_at) 
-        SELECT id, ?, ?, ?, ?, NOW() FROM guild_wars WHERE active = 1 AND ((guild1_id = ? AND guild2_id = ?) OR (guild1_id = ? AND guild2_id = ?))")
-        ->execute([$_SESSION['user_id'], $enemyId, $damage, $score, $myMembership['guild_id'], $enemyGuild['guild_id'], $enemyGuild['guild_id'], $myMembership['guild_id']]);
+    // Insert into war_history instead of non-existent guild_war_attacks
+    $stmt = $pdo->prepare("SELECT id FROM guild_wars WHERE status = 'active' AND ((attacker_guild_id = ? AND defender_guild_id = ?) OR (attacker_guild_id = ? AND defender_guild_id = ?))");
+    $stmt->execute([$myMembership['guild_id'], $enemyGuild['guild_id'], $enemyGuild['guild_id'], $myMembership['guild_id']]);
+    $war = $stmt->fetch();
+    
+    if ($war) {
+        $pdo->prepare("INSERT INTO war_history (war_id, event_type, description, timestamp) VALUES (?, 'attack', CONCAT(?, ' нанес ', ?, ' урона'), NOW())")
+            ->execute([$war['id'], $_SESSION['user_id'], $damage]);
+        
+        // Update participant stats
+        $pdo->prepare("UPDATE war_participants SET damage_dealt = damage_dealt + ? WHERE war_id = ? AND user_id = ?")
+            ->execute([$damage, $war['id'], $_SESSION['user_id']]);
+    }
     
     echo json_encode(['success' => true, 'damage' => $damage, 'score' => $score]);
 }
@@ -395,7 +405,7 @@ function getGuildWarLeaderboard(): void {
     }
     
     $pdo = Database::getConnection();
-    $stmt = $pdo->prepare("SELECT u.username, SUM(gwa.score) as total_score, COUNT(gwa.id) as attacks FROM guild_war_attacks gwa JOIN users u ON gwa.attacker_id = u.id WHERE gwa.war_id = ? GROUP BY u.id ORDER BY total_score DESC LIMIT 20");
+    $stmt = $pdo->prepare("SELECT u.username, COALESCE(SUM(wp.damage_dealt), 0) as total_score, COUNT(wp.id) as attacks FROM war_participants wp JOIN users u ON wp.user_id = u.id WHERE wp.war_id = ? GROUP BY u.id ORDER BY total_score DESC LIMIT 20");
     $stmt->execute([$warId]);
     echo json_encode($stmt->fetchAll());
 }
