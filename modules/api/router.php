@@ -9,7 +9,7 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../../config.php';
 
 try {
     Database::getConnection();
@@ -25,13 +25,13 @@ header('Content-Type: application/json; charset=utf-8');
 define('GAME_MODULE', true);
 
 // Load all modules
-require_once __DIR__ . '/auth/auth.php';
-require_once __DIR__ . '/battle/battle.php';
-require_once __DIR__ . '/inventory/inventory.php';
-require_once __DIR__ . '/chat/chat.php';
-require_once __DIR__ . '/guild/guild.php';
-require_once __DIR__ . '/market/market.php';
-require_once __DIR__ . '/admin/admin.php';
+require_once __DIR__ . '/../auth/auth.php';
+require_once __DIR__ . '/../battle/battle.php';
+require_once __DIR__ . '/../inventory/inventory.php';
+require_once __DIR__ . '/../chat/chat.php';
+require_once __DIR__ . '/../guild/guild.php';
+require_once __DIR__ . '/../market/market.php';
+require_once __DIR__ . '/../admin/admin.php';
 
 $action = $_POST['action'] ?? $_GET['action'] ?? '';
 
